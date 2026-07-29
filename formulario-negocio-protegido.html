@@ -884,7 +884,7 @@
   </div>
 
   <!-- FORM -->
-  <form id="businessForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST" novalidate>
+  <form id="businessForm" action="https://formspree.io/f/xwvgyzaa" method="POST" novalidate>
 
     <!-- ================= STEP 0: WELCOME ================= -->
     <div class="screen active" data-step="0">
@@ -1399,12 +1399,30 @@
       if (response.ok) {
         showStep(5);
       } else {
+        // Try to read Formspree's specific error message
+        let detalle = '';
+        try {
+          const data = await response.json();
+          if (data && Array.isArray(data.errors) && data.errors.length) {
+            detalle = data.errors.map(function(er) {
+              return (er.field ? er.field + ': ' : '') + (er.message || '');
+            }).join(' · ');
+          } else if (data && data.error) {
+            detalle = data.error;
+          }
+        } catch (parseErr) {
+          detalle = 'Código de respuesta: ' + response.status;
+        }
         form.style.display = 'block';
+        errorBox.textContent = detalle
+          ? ('No se pudo enviar. Formspree respondió: “' + detalle + '”. Toma captura y compártela para resolverlo.')
+          : ('Hubo un problema al enviar el formulario (código ' + response.status + '). Por favor intenta de nuevo o contáctanos directamente.');
         errorBox.classList.add('visible');
       }
     } catch (err) {
       document.getElementById('loading').classList.remove('active');
       form.style.display = 'block';
+      errorBox.textContent = 'No se pudo conectar con el servidor (posible problema de red). Detalle: ' + (err && err.message ? err.message : 'desconocido');
       errorBox.classList.add('visible');
     }
   });
